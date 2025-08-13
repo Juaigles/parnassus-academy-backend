@@ -3,6 +3,7 @@ import { marketingPatchSchema } from '../validators/courseMarketingSchemas.js';
 import * as courseService from '../services/courseService.js';
 import * as courseViewService from '../services/courseViewService.js';
 import * as courseRepo from '../repositories/courseRepo.js';
+import * as purchaseService from '../services/purchaseService.js';
 import AppError from '../libs/appError.js';
 
 export async function createCourse(req,res,next){
@@ -55,6 +56,15 @@ export async function getCourseBySlug(req,res,next){
 export async function getCourse(req,res,next){
   try{
     const viewer = req.user||null;
+    
+    // Si hay usuario, verificar acceso
+    if (viewer) {
+      const accessCheck = await purchaseService.canAccessCourse(viewer, req.params.id);
+      if (!accessCheck.hasAccess) {
+        throw new AppError('Access denied. Purchase required.', 403);
+      }
+    }
+    
     const course = await courseService.getCourseForViewer({ courseId:req.params.id, viewer });
     res.json(course);
   }catch(e){ next(e); }

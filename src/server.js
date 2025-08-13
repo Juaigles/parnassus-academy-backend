@@ -23,6 +23,9 @@ import { courseExtrasRouter } from './routes/courseExtras.routes.js';
 import { progressRouter } from './routes/progress.routes.js';
 import { outlineRouter } from './routes/outline.routes.js';
 import { videoAssetRouter } from './routes/videoAsset.routes.js';
+import { purchaseRouter } from './routes/purchase.routes.js';
+import { wishlistRouter } from './routes/wishlist.routes.js';
+import { webhookRouter } from './routes/webhook.routes.js';
 
 async function main() {
   await connectDB();
@@ -33,6 +36,9 @@ async function main() {
   app.use(helmet());
   app.use(cors({ origin: env.CORS_ORIGIN || true, credentials: true }));
   app.use(pinoHttp({ logger }));
+  // Webhook de Stripe (ANTES de express.json para raw body)
+  app.use('/api/webhooks/stripe', express.raw({ type: 'application/json' }), webhookRouter);
+
   app.use(express.json({ limit: "1mb" }));
   app.use(express.urlencoded({ extended: true }));
 
@@ -45,17 +51,19 @@ async function main() {
 
   const limiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 100 });
   app.use("/auth", limiter, authRouter);
-  app.use(courseRouter);
-  app.use(moduleRouter);
-  app.use(lessonRouter);
-  app.use(videoRouter);
-  app.use(adminRouter);
-  app.use(quizRouter);
-app.use(moduleQuizRouter);
-app.use(courseExtrasRouter);
-app.use(progressRouter);
-app.use(outlineRouter);
-app.use(videoAssetRouter);
+  app.use('/api', courseRouter);
+  app.use('/api', moduleRouter);
+  app.use('/api', lessonRouter);
+  app.use('/api', videoRouter);
+  app.use('/api', adminRouter);
+  app.use('/api', quizRouter);
+  app.use('/api', moduleQuizRouter);
+  app.use('/api', courseExtrasRouter);
+  app.use('/api', progressRouter);
+  app.use('/api', outlineRouter);
+  app.use('/api', videoAssetRouter);
+  app.use('/api', purchaseRouter);
+  app.use('/api', wishlistRouter);
 
   app.use("/", healthRouter);
 

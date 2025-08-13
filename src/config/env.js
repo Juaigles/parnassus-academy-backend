@@ -16,6 +16,19 @@ const schema = z.object({
 
   BCRYPT_SALT_ROUNDS: z.coerce.number().default(10),
   CERT_HASH_SECRET: z.string().min(16).optional(),
+  
+  // Stripe
+  STRIPE_SECRET_KEY: z.string().min(10).optional(),
+  STRIPE_PUBLISHABLE_KEY: z.string().min(10).optional(),
+  STRIPE_WEBHOOK_SECRET: z.string().min(10).optional(),
+  
+  // Email (para notificaciones de compra)
+  EMAIL_FROM: z.string().email().optional(),
+  EMAIL_PROVIDER: z.enum(['ses', 'smtp', 'sendgrid']).default('smtp').optional(),
+  SMTP_HOST: z.string().optional(),
+  SMTP_PORT: z.coerce.number().optional(),
+  SMTP_USER: z.string().optional(),
+  SMTP_PASS: z.string().optional(),
 });
 
 const parsed = schema.safeParse(process.env);

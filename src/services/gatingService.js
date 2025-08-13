@@ -3,6 +3,7 @@ import AppError from '../libs/appError.js';
 import * as moduleRepo from '../repositories/moduleRepo.js';
 import * as lessonRepo from '../repositories/lessonRepo.js';
 import * as progressRepo from '../repositories/progressRepo.js';
+import * as purchaseService from '../services/purchaseService.js';
 
 /**
  * ---- Edición de curso (para crear/editar/borrar módulos, lecciones, assets, quizzes, etc.) ----
@@ -35,11 +36,36 @@ export function assertCanEditCourse(course, user) {
 }
 
 /**
+ * ---- Verificar acceso al curso (compra + gating) ----
+ */
+export async function canAccessCourse({ userId, courseId }) {
+  // Obtener el usuario para verificar roles
+  const User = (await import('../models/User.js')).default;
+  const user = await User.findById(userId);
+  if (!user) return { ok: false, reason: 'user_not_found' };
+  
+  // Verificar acceso por roles y compra
+  const accessCheck = await purchaseService.canAccessCourse(user, courseId);
+  
+  if (!accessCheck.hasAccess) {
+    return { ok: false, reason: accessCheck.reason };
+  }
+  
+  return { ok: true, reason: accessCheck.reason };
+}
+
+/**
  * ---- Gating por lección: no puedes abrir L si la anterior no está completada ----
  */
 export async function canAccessLesson({ userId, lessonId }) {
   const lesson = await lessonRepo.findById(lessonId);
   if (!lesson) return { ok: false, reason: 'lesson_not_found' };
+
+  // Primero verificar acceso al curso
+  const courseAccess = await canAccessCourse({ userId, courseId: lesson.course });
+  if (!courseAccess.ok) {
+    return { ok: false, reason: 'course_not_purchased' };
+  }
 
   const courseId = lesson.course;
   const modLessons = await lessonRepo.listByModule(lesson.module);
@@ -67,6 +93,13 @@ export async function canStartModuleQuiz({ userId, moduleId }) {
   if (moduleLessons.length === 0) return { ok: false, reason: 'module_has_no_lessons' };
 
   const courseId = moduleLessons[0].course;
+  
+  // Verificar acceso al curso
+  const courseAccess = await canAccessCourse({ userId, courseId });
+  if (!courseAccess.ok) {
+    return { ok: false, reason: 'course_not_purchased' };
+  }
+
   const progress = await progressRepo.findOrCreate({ userId, courseId });
 
   const allDone = moduleLessons.every(l =>
@@ -81,6 +114,12 @@ export async function canStartModuleQuiz({ userId, moduleId }) {
  * ---- Gating quiz final: requiere todos los módulos aprobados ----
  */
 export async function canStartFinalQuiz({ userId, courseId }) {
+  // Verificar acceso al curso
+  const courseAccess = await canAccessCourse({ userId, courseId });
+  if (!courseAccess.ok) {
+    return { ok: false, reason: 'course_not_purchased' };
+  }
+
   const modules = await moduleRepo.listByCourse(courseId);
   if (modules.length === 0) return { ok: false, reason: 'course_has_no_modules' };
 
