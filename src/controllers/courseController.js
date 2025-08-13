@@ -1,8 +1,72 @@
-import { courseCreateSchema, courseUpdateSchema } from '../validators/courseSchemas.js';
+import { courseCreateSchema, courseUpdateSchema, marketingPatchSchema  } from '../validators/courseSchemas.js';
 import * as courseService from '../services/courseService.js';
+import * as courseViewService from '../services/courseViewService.js';
+import * as courseRepo from '../repositories/courseRepo.js';
+import AppError from '../libs/appError.js';
 
-export async function createCourse(req,res,next){ try{ const dto=courseCreateSchema.parse(req.body); const c=await courseService.createCourse({ data:dto, ownerId:req.user.id }); res.status(201).json(c);}catch(e){next(e);} }
-export async function updateCourse(req,res,next){ try{ const dto=courseUpdateSchema.parse(req.body); const c=await courseService.updateCourse({ courseId:req.params.id, ownerId:req.user.id, patch:dto }); res.json(c);}catch(e){next(e);} }
-export async function submitCourse(req,res,next){ try{ const out=await courseService.submitForApproval({ courseId:req.params.id, ownerId:req.user.id, notes:req.body?.notes }); res.json(out);}catch(e){next(e);} }
-export async function listPublic(req,res,next){ try{ const list=await courseService.listPublic({ limit:Number(req.query.limit)||20, skip:Number(req.query.skip)||0 }); res.json(list);}catch(e){next(e);} }
-export async function getCourse(req,res,next){ try{ const viewer=req.user||null; const course=await courseService.getCourseForViewer({ courseId:req.params.id, viewer }); res.json(course);}catch(e){next(e);} }
+export async function createCourse(req,res,next){
+  try{
+    const dto = courseCreateSchema.parse(req.body);
+    const c = await courseRepo.create({ ...dto, owner: req.user.id, status: 'draft' });
+    res.status(201).json(c);
+  }catch(e){ next(e); }
+}
+
+export async function updateCourse(req,res,next){
+  try{
+    const dto = courseUpdateSchema.parse(req.body);
+    const c = await courseService.updateCourse({ courseId:req.params.id, ownerId:req.user.id, patch:dto });
+    res.json(c);
+  }catch(e){ next(e); }
+}
+
+export async function submitCourse(req,res,next){
+  try{
+    const out = await courseService.submitForApproval({ courseId:req.params.id, ownerId:req.user.id, notes:req.body?.notes });
+    res.json(out);
+  }catch(e){ next(e); }
+}
+
+/** LISTADO PARA TARJETAS (público) */
+export async function listPublic(req,res,next){
+  try{
+    const list = await courseViewService.listCards({
+      limit:Number(req.query.limit)||20,
+      skip:Number(req.query.skip)||0,
+      level:req.query.level,
+      tag:req.query.tag,
+      search:req.query.search
+    });
+    res.json(list);
+  }catch(e){ next(e); }
+}
+
+/** DETALLE PÚBLICO POR SLUG (para la página del curso) */
+export async function getCourseBySlug(req,res,next){
+  try{
+    const detail = await courseViewService.getDetailBySlug(req.params.slug);
+    if (!detail) throw new AppError('Course not found', 404);
+    res.json(detail);
+  }catch(e){ next(e); }
+}
+
+/** (privado) GET por id que ya tenías, lo dejo por compatibilidad */
+export async function getCourse(req,res,next){
+  try{
+    const viewer = req.user||null;
+    const course = await courseService.getCourseForViewer({ courseId:req.params.id, viewer });
+    res.json(course);
+  }catch(e){ next(e); }
+}
+
+/** PATCH marketing */
+export async function patchMarketing(req,res,next){
+  try{
+    const dto = marketingPatchSchema.parse(req.body);
+    const c = await courseService.updateMarketing({
+      courseId: req.params.id,
+      owner: { user: req.user, body: dto }
+    });
+    res.json(c);
+  }catch(e){ next(e); }
+}

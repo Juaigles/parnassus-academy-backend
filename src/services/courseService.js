@@ -1,6 +1,7 @@
 import * as courseRepo from '../repositories/courseRepo.js';
 import * as approvalRepo from '../repositories/approvalRepo.js';
 import AppError from '../libs/appError.js';
+import { assertCanEditCourse } from './gatingService.js';
 
 export async function createCourse({ data, ownerId }) {
   return courseRepo.create({ ...data, owner: ownerId, status: 'draft' });
@@ -31,4 +32,22 @@ export async function getCourseForViewer({ courseId, viewer }){
   const isAdmin = viewer?.roles?.includes('admin');
   if (course.status!=='published' && !isOwner && !isAdmin) throw new AppError('Forbidden', 403);
   return course;
+}
+
+export async function updateMarketing({ courseId, owner }) {
+  const body = owner.body || {}; // lo recibimos desde controller
+  const course = await courseRepo.findById(courseId);
+  if (!course) throw new AppError('Course not found', 404);
+
+  assertCanEditCourse(course, owner.user);
+
+  // permitimos parchear marketing completo o sus subcampos
+  if (body.marketing) {
+    course.marketing = { ...(course.marketing || {}), ...body.marketing };
+  }
+  if (Array.isArray(body.tags)) course.tags = body.tags;
+  if (typeof body.excerpt === 'string') course.excerpt = body.excerpt;
+  if (typeof body.level === 'string') course.level = body.level;
+
+  return course.save();
 }

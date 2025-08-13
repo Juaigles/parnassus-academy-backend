@@ -1,17 +1,14 @@
+// src/repositories/progressRepo.js
 import Progress from '../models/Progress.js';
 
-export const findByUserLesson = (userId, lessonId) =>
-  Progress.findOne({ userId, lessonId });
-
-export const upsertProgress = (userId, courseId, lessonId, patch) =>
-  Progress.findOneAndUpdate(
-    { userId, lessonId },
-    { $setOnInsert: { userId, courseId, lessonId, startedAt: new Date() }, $set: patch },
-    { new: true, upsert: true }
+export function findOrCreate({ userId, courseId }) {
+  return Progress.findOneAndUpdate(
+    { userId, courseId },
+    { $setOnInsert: { userId, courseId } },
+    { upsert: true, new: true }
   );
-
-export const listByUserModule = (userId, moduleLessonIds) =>
-  Progress.find({ userId, lessonId: { $in: moduleLessonIds } }).lean();
-
-export const listByUserCourse = (userId, courseId) =>
-  Progress.find({ userId, courseId }).lean();
+}
+export function findByUserCourse({ userId, courseId }) {
+  return Progress.findOne({ userId, courseId });
+}
+export function save(progress) { return progress.save(); }

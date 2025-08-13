@@ -1,16 +1,16 @@
 import mongoose from 'mongoose';
 
-/**
- * Un vídeo por lección (1:1).
- * Guardamos la clave de almacenamiento (S3/R2/GCS), duración y transcripción.
- */
 const videoAssetSchema = new mongoose.Schema({
-  courseId:  { type: mongoose.Schema.Types.ObjectId, ref: 'Course', required: true, index: true },
-  lessonId:  { type: mongoose.Schema.Types.ObjectId, ref: 'Lesson', required: true, unique: true, index: true },
-  storageKey:{ type: String, required: true, trim: true },
-  durationSec:{ type: Number, default: 0, min: 0 },
-  mimeType:  { type: String, default: 'video/mp4' },
-  transcripts:[{ type: String }]
+  lessonId: { type: mongoose.Schema.Types.ObjectId, ref: 'Lesson' },
+  owner: { type: mongoose.Schema.Types.ObjectId, ref: 'User', index: true },
+
+  key: { type: String, required: true },      // s3 key o ruta
+  durationSec: { type: Number, default: 0 },
+
+  scope: { type: String, enum: ['lesson','course_preview','resource'], default: 'lesson' },
+  visibility: { type: String, enum: ['public','private'], default: 'private' },
+
+  playbackUrl: { type: String },              // si ya guardas una URL pública
 }, { timestamps: true, versionKey: false });
 
 export default mongoose.model('VideoAsset', videoAssetSchema);
