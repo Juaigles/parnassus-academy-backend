@@ -20,9 +20,14 @@ const GoalSchema = z.object({
   description: z.string().min(5).max(500)
 });
 
-const SyllabusItemSchema = z.object({
-  moduleTitle: z.string().min(3).max(120),
-  lessonTitles: z.array(z.string()).min(1).max(50)
+const SyllabusLessonSchema = z.object({
+  title: z.string().min(1).max(120),
+  durationSec: z.number().min(0).optional()
+});
+
+const SyllabusModuleSchema = z.object({
+  title: z.string().min(3).max(120),
+  lessons: z.array(SyllabusLessonSchema).optional()
 });
 
 const MethodologySchema = z.object({
@@ -58,15 +63,30 @@ const FaqSchema = z.object({
 export const marketingPatchSchema = z.object({
   card: CardSchema.optional(),
   hero: HeroSchema.optional(),
+  
+  // Formatos alternativos para goals/objectives
   goals: z.array(GoalSchema).optional(),
+  objectives: z.array(GoalSchema).optional(),
+  
   outcomes: z.array(z.string()).optional(),
   features: z.array(z.string()).optional(),
-  syllabus: z.array(SyllabusItemSchema).optional(),
+  syllabus: z.array(SyllabusModuleSchema).optional(),
+  
+  // Formatos alternativos para methodology/methodologies
   methodologies: z.array(MethodologySchema).max(6).optional(),
+  methodology: z.array(z.string()).optional(),
+  
   resources: z.array(ResourceSchema).max(10).optional(),
+  
+  // Formatos alternativos para teacher/instructor
   teacher: TeacherSchema.optional(),
+  instructor: TeacherSchema.optional(),
+  
   testimonials: z.array(TestimonialSchema).max(8).optional(),
-  faq: z.array(FaqSchema).max(12).optional()
+  
+  // Formatos alternativos para faq/faqs
+  faq: z.array(FaqSchema).max(12).optional(),
+  faqs: z.array(FaqSchema).max(12).optional()
 })
-  .passthrough() // <— conservar otras claves como objectives, faqs, methodology si las usas
+  .passthrough() // conservar otras claves
   .refine(obj => Object.keys(obj).length > 0, { message: 'Debes enviar al menos un campo de marketing' });

@@ -6,6 +6,8 @@ const videoAssetSchema = new mongoose.Schema({
 
   key: { type: String, required: true },      // s3 key o ruta
   durationSec: { type: Number, default: 0 },
+  mimeType: { type: String, default: 'video/mp4' },  // Agregar campo mimeType
+  transcripts: { type: [String], default: [] },      // Agregar campo transcripts
 
   scope: { type: String, enum: ['lesson','course_preview','resource'], default: 'lesson' },
   visibility: { type: String, enum: ['public','private'], default: 'private' },

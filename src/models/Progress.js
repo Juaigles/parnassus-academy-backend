@@ -1,13 +1,30 @@
-// src/models/Progress.js
 import mongoose from 'mongoose';
 
+// Progreso detallado por lección
 const lessonProgressSchema = new mongoose.Schema({
   lessonId: { type: mongoose.Schema.Types.ObjectId, ref: 'Lesson', required: true },
-  watchedSec: { type: Number, default: 0 },   // solo si hay vídeo
+  
+  // Progreso de video
+  video: {
+    percentMax: { type: Number, default: 0, min: 0, max: 1 }, // 0.0 a 1.0
+    lastPositionSec: { type: Number, default: 0 },
+    secondsWatched: { type: Number, default: 0 },
+    completed: { type: Boolean, default: false }
+  },
+  
+  // Progreso de quiz (si existe)
+  quiz: {
+    attempts: { type: Number, default: 0 },
+    bestScore: { type: Number, default: 0 },
+    passed: { type: Boolean, default: false }
+  },
+  
+  // Estado general de la lección
   completed: { type: Boolean, default: false },
   completedAt: { type: Date }
 }, { _id: false });
 
+// Resultados de quiz por módulo
 const moduleResultSchema = new mongoose.Schema({
   moduleId: { type: mongoose.Schema.Types.ObjectId, ref: 'Module', required: true },
   passed: { type: Boolean, default: false },
@@ -16,24 +33,34 @@ const moduleResultSchema = new mongoose.Schema({
   passedAt: { type: Date }
 }, { _id: false });
 
-const courseResultSchema = new mongoose.Schema({
-  passed: { type: Boolean, default: false },
-  scorePct: { type: Number, default: 0 },
-  passedAt: { type: Date },
-  certificateId: { type: mongoose.Schema.Types.ObjectId, ref: 'Certificate' }
-}, { _id: false });
-
 const progressSchema = new mongoose.Schema({
-  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', index: true, required: true },
-  courseId: { type: mongoose.Schema.Types.ObjectId, ref: 'Course', index: true, required: true },
-  lessons: { type: [lessonProgressSchema], default: [] },
-  modules: { type: [moduleResultSchema], default: [] },
-  course: { type: courseResultSchema, default: {} },
-  // caches de % (se recalculan en el servicio)
-  coursePct: { type: Number, default: 0 },
-  modulePctById: { type: Map, of: Number, default: {} }
-}, { timestamps: true });
+  user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, index: true },
+  course: { type: mongoose.Schema.Types.ObjectId, ref: 'Course', required: true, index: true },
+  
+  // Progreso detallado por lección
+  lessons: [lessonProgressSchema],
+  
+  // Resultados de quizzes de módulo
+  modules: [moduleResultSchema],
+  
+  // Progreso general del curso
+  coursePct: { type: Number, default: 0, min: 0, max: 100 },
+  
+  // Quiz final del curso
+  finalQuiz: {
+    passed: { type: Boolean, default: false },
+    scorePct: { type: Number, default: 0 },
+    passedAt: { type: Date }
+  },
+  
+  // Referencias rápidas
+  lastLesson: { type: mongoose.Schema.Types.ObjectId, ref: 'Lesson' }
+}, { 
+  timestamps: true, 
+  versionKey: false,
+  toJSON: { virtuals: true, transform(_d,r){ r.id=String(r._id); delete r._id; } }
+});
 
-progressSchema.index({ userId: 1, courseId: 1 }, { unique: true });
+progressSchema.index({ user: 1, course: 1 }, { unique: true });
 
 export default mongoose.model('Progress', progressSchema);

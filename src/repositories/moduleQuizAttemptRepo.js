@@ -1,8 +1,7 @@
 import ModuleQuizAttempt from '../models/ModuleQuizAttempt.js';
-export const countByUserAndQuiz = (userId, moduleQuizId) =>
-  ModuleQuizAttempt.countDocuments({ userId, moduleQuizId });
-export const create = (d) => ModuleQuizAttempt.create(d);
-export const listMyAttempts = (userId, moduleId) =>
-  ModuleQuizAttempt.find({ userId, moduleId }).sort({ createdAt: -1 }).lean();
-export const anyPassedForUserModule = (userId, moduleId) =>
-  ModuleQuizAttempt.exists({ userId, moduleId, passed: true });
+
+export const create = (data) => ModuleQuizAttempt.create(data);
+export const findById = (id) => ModuleQuizAttempt.findById(id);
+export const countByUserAndQuiz = (userId, moduleQuizId) => ModuleQuizAttempt.countDocuments({ user: userId, moduleQuiz: moduleQuizId });
+export const listByUserAndModule = (userId, moduleId) => ModuleQuizAttempt.find({ user: userId, moduleQuiz: moduleId }).sort({ createdAt: -1 }).lean();
+export const findBestAttemptByUserAndModule = (userId, moduleId) => ModuleQuizAttempt.findOne({ user: userId, moduleQuiz: moduleId }).populate('attempt').sort({ 'attempt.scorePct': -1 }).lean();

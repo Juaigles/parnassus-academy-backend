@@ -10,19 +10,20 @@ import AppError from '../libs/appError.js';
 export async function upsertVideoAsset({ data, user }) {
   const lesson = await lessonRepo.findById(data.lessonId);
   if (!lesson) throw new AppError('Lesson not found', 404);
-  if (String(lesson.courseId) !== String(data.courseId)) {
-    throw new AppError('Conflict', 409, 'lesson.courseId no coincide con courseId');
+  if (String(lesson.course) !== String(data.courseId)) {
+    throw new AppError('Conflict', 409, 'lesson.course no coincide con courseId');
   }
   const course = await courseRepo.findById(data.courseId);
   assertCanEditCourse(course, user);
 
   const va = await videoAssetRepo.upsertByLesson(lesson._id, {
-    courseId: course._id,
     lessonId: lesson._id,
-    storageKey: data.storageKey,
+    owner: user.id,  // Agregar el owner del video
+    key: data.storageKey,  // El campo en el modelo se llama 'key', no 'storageKey'
     durationSec: data.durationSec ?? 0,
     mimeType: data.mimeType || 'video/mp4',
-    transcripts: data.transcripts || []
+    transcripts: data.transcripts || [],
+    scope: 'lesson'  // Establecer scope explícitamente
   });
 
   // actualiza duración de la lección si aporta valor
@@ -37,13 +38,13 @@ export async function upsertVideoAsset({ data, user }) {
 export async function getLessonVideoUrl({ lessonId, viewer }) {
   const lesson = await lessonRepo.findById(lessonId);
   if (!lesson) throw new AppError('Lesson not found', 404);
-  const course = await courseRepo.findById(lesson.courseId);
+  const course = await courseRepo.findById(lesson.course);
   assertCanViewCourse(course, viewer || null);
 
   // Si no es admin ni owner, aplica gating (bloqueos)
   if (!isAdmin(viewer) && !isOwner(viewer, course)) {
     const unlocked = await isLessonUnlocked({
-      user: viewer, course, module: { _id: lesson.moduleId, index: 0 }, lesson
+      user: viewer, course, module: { _id: lesson.module, index: 0 }, lesson
     });
     if (!unlocked) throw new AppError('Locked', 423, 'Lección bloqueada por prerrequisitos');
   }

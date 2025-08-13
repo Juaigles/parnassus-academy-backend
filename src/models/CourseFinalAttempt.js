@@ -1,19 +1,15 @@
 import mongoose from 'mongoose';
 
-const answerSchema = new mongoose.Schema({
-  questionIndex: { type: Number, required: true, min: 0 },
-  selectedIndexes: { type: [Number], default: [] }
-}, { _id: false });
+const courseFinalAttemptSchema = new mongoose.Schema({
+  finalQuiz: { type: mongoose.Schema.Types.ObjectId, ref: 'CourseFinalQuiz', required: true, index: true },
+  user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, index: true },
+  attempt: { type: mongoose.Schema.Types.ObjectId, ref: 'Attempt', required: true }
+}, {
+  timestamps: true,
+  versionKey: false,
+  toJSON: { virtuals: true, transform(_d, r){ r.id=String(r._id); delete r._id; } }
+});
 
-const finalAttemptSchema = new mongoose.Schema({
-  courseId: { type: mongoose.Schema.Types.ObjectId, ref: 'Course', required: true, index: true },
-  finalQuizId: { type: mongoose.Schema.Types.ObjectId, ref: 'CourseFinalQuiz', required: true, index: true },
-  userId:   { type: mongoose.Schema.Types.ObjectId, ref: 'User',   required: true, index: true },
-  answers:  { type: [answerSchema], default: [] },
-  score:    { type: Number, required: true, min: 0, max: 100 },
-  passed:   { type: Boolean, required: true }
-}, { timestamps: true, versionKey: false });
+courseFinalAttemptSchema.index({ user: 1, finalQuiz: 1 });
 
-finalAttemptSchema.index({ userId:1, finalQuizId:1, createdAt:-1 });
-
-export default mongoose.model('CourseFinalAttempt', finalAttemptSchema);
+export default mongoose.model('CourseFinalAttempt', courseFinalAttemptSchema);

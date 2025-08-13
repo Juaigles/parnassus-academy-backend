@@ -1,7 +1,6 @@
 import Quiz from '../models/Quiz.js';
-export const findByLesson = (lessonId) => Quiz.findOne({ lessonId });
+
+export const create = (data) => Quiz.create(data);
 export const findById = (id) => Quiz.findById(id);
-export const upsertByLesson = (lessonId, data, session) =>
-  Quiz.findOneAndUpdate({ lessonId }, data, { new: true, upsert: true, session });
-export const deleteByLesson = (lessonId, session) =>
-  Quiz.findOneAndDelete({ lessonId }, { session });
+export const updateById = (id, update) => Quiz.findByIdAndUpdate(id, update, { new: true });
+export const deleteById = (id) => Quiz.findByIdAndDelete(id);

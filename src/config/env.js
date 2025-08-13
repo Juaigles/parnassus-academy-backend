@@ -15,6 +15,7 @@ const schema = z.object({
   JWT_REFRESH_TTL: z.string().default('7d'),
 
   BCRYPT_SALT_ROUNDS: z.coerce.number().default(10),
+  CERT_HASH_SECRET: z.string().min(16).optional(),
 });
 
 const parsed = schema.safeParse(process.env);

@@ -30,6 +30,16 @@ const faqSchema = new mongoose.Schema({
   a: { type: String, required: true },
 }, { _id: false });
 
+const syllabusLessonSchema = new mongoose.Schema({
+  title: { type: String, required: true },
+  durationSec: { type: Number, default: 0 },
+}, { _id: false });
+
+const syllabusModuleSchema = new mongoose.Schema({
+  title: { type: String, required: true },
+  lessons: [syllabusLessonSchema],
+}, { _id: false });
+
 const marketingSchema = new mongoose.Schema({
   card: {
     coverImageUrl: String,
@@ -47,6 +57,7 @@ const marketingSchema = new mongoose.Schema({
   teacher: { type: mongoose.Schema.Types.ObjectId, ref: 'Teacher' },
   testimonials: [testimonialSchema],
   faqs: [faqSchema],
+  syllabus: [syllabusModuleSchema], // Índice automático del contenido del curso
 }, { _id: false });
 
 const statsSchema = new mongoose.Schema({

@@ -2,7 +2,7 @@ import * as courseRepo from '../repositories/courseRepo.js';
 import * as lessonRepo from '../repositories/lessonRepo.js';
 import * as quizRepo from '../repositories/quizRepo.js';
 import * as attemptRepo from '../repositories/attemptRepo.js';
-import * as progressService from './progressService.js';
+import * as videoProgressService from './videoProgressService.js';
 import { assertCanEditCourse, assertCanViewCourse, isAdmin, isOwner } from './_rules.js';
 import { isLessonUnlocked } from './gatingService.js';
 import AppError from '../libs/appError.js';
@@ -87,7 +87,14 @@ export async function submitLessonAttempt({ lessonId, userId, payload }) {
     quizId: q._id, courseId: q.courseId, lessonId: q.lessonId, userId, answers: payload.answers, score, passed
   });
 
-  await progressService.applyQuizResult({ userId, courseId: q.courseId, lessonId: q.lessonId, score, passed });
+  await videoProgressService.applyQuizResult({ 
+    userId, 
+    courseId: q.courseId, 
+    lessonId: q.lessonId, 
+    quizType: 'lesson',
+    score, 
+    passed 
+  });
 
   return { attemptId: doc._id, score, passed, attemptsLeft: Math.max(q.maxAttempts - (used + 1), 0) };
 }

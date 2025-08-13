@@ -41,8 +41,8 @@ export async function canAccessLesson({ userId, lessonId }) {
   const lesson = await lessonRepo.findById(lessonId);
   if (!lesson) return { ok: false, reason: 'lesson_not_found' };
 
-  const courseId = lesson.courseId;
-  const modLessons = await lessonRepo.listByModule(lesson.moduleId);
+  const courseId = lesson.course;
+  const modLessons = await lessonRepo.listByModule(lesson.module);
   const ordered = modLessons.sort((a, b) => a.index - b.index);
   const idx = ordered.findIndex(l => String(l._id) === String(lessonId));
   if (idx === -1) return { ok: false, reason: 'lesson_not_in_module' };
@@ -50,8 +50,11 @@ export async function canAccessLesson({ userId, lessonId }) {
 
   const prev = ordered[idx - 1];
   const progress = await progressRepo.findOrCreate({ userId, courseId });
-  const prevLp = progress.lessons.find(lp => String(lp.lessonId) === String(prev._id));
-  if (!prevLp || !prevLp.completed) return { ok: false, reason: 'previous_lesson_incomplete' };
+  const prevLessonProgress = progress.lessons.find(lp => String(lp.lessonId) === String(prev._id));
+  
+  if (!prevLessonProgress || !prevLessonProgress.completed) {
+    return { ok: false, reason: 'previous_lesson_incomplete' };
+  }
 
   return { ok: true };
 }
@@ -63,7 +66,7 @@ export async function canStartModuleQuiz({ userId, moduleId }) {
   const moduleLessons = await lessonRepo.listByModule(moduleId);
   if (moduleLessons.length === 0) return { ok: false, reason: 'module_has_no_lessons' };
 
-  const courseId = moduleLessons[0].courseId;
+  const courseId = moduleLessons[0].course;
   const progress = await progressRepo.findOrCreate({ userId, courseId });
 
   const allDone = moduleLessons.every(l =>
@@ -84,7 +87,7 @@ export async function canStartFinalQuiz({ userId, courseId }) {
   const progress = await progressRepo.findOrCreate({ userId, courseId });
 
   const allModulesPassed = modules.every(m =>
-    progress.modules.find(mr => String(mr.moduleId) === String(m._id))?.passed
+    progress.completedModules.includes(String(m._id))
   );
   if (!allModulesPassed) return { ok: false, reason: 'not_all_modules_passed' };
 

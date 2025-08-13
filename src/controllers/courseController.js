@@ -1,4 +1,5 @@
-import { courseCreateSchema, courseUpdateSchema, marketingPatchSchema  } from '../validators/courseSchemas.js';
+import { courseCreateSchema, courseUpdateSchema } from '../validators/courseSchemas.js';
+import { marketingPatchSchema } from '../validators/courseMarketingSchemas.js';
 import * as courseService from '../services/courseService.js';
 import * as courseViewService from '../services/courseViewService.js';
 import * as courseRepo from '../repositories/courseRepo.js';
@@ -62,11 +63,34 @@ export async function getCourse(req,res,next){
 /** PATCH marketing */
 export async function patchMarketing(req,res,next){
   try{
+    // Validar con el esquema correcto
     const dto = marketingPatchSchema.parse(req.body);
+    
+    // Llamar al servicio
     const c = await courseService.updateMarketing({
       courseId: req.params.id,
-      owner: { user: req.user, body: dto }
+      ownerId: req.user.id,
+      marketingPatch: dto
     });
+    
     res.json(c);
-  }catch(e){ next(e); }
+  }catch(e){ 
+    console.log('❌ Error en patchMarketing:', e.message);
+    next(e); 
+  }
+}
+
+/** POST regenerar syllabus automáticamente */
+export async function regenerateSyllabus(req,res,next){
+  try{
+    const syllabus = await courseService.updateCourseSyllabus(req.params.id);
+    res.json({ 
+      success: true, 
+      message: 'Syllabus regenerado automáticamente',
+      syllabus 
+    });
+  }catch(e){ 
+    console.log('❌ Error en regenerateSyllabus:', e.message);
+    next(e); 
+  }
 }
