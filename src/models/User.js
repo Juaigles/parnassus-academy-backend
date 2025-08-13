@@ -1,15 +1,21 @@
+// src/models/User.js
 import mongoose from 'mongoose';
+import bcrypt from 'bcrypt';
+import { env } from '../config/env.js';
+
 const userSchema = new mongoose.Schema({
-  email: { type: String, required: true, unique: true, index: true, lowercase: true, trim: true },
+  email: { type: String, required: true, unique: true, index: true, trim: true },
   passwordHash: { type: String, required: true },
-  roles: { type: [String], default: ['student'] }, // 'admin','teacher','student'
+  roles: { type: [String], default: ['student'] },
   emailVerified: { type: Boolean, default: false },
-  status: { type: String, enum: ['active','blocked'], default: 'active' },
-  billingCustomerId: { type: String, default: null }
-}, {
-  timestamps: true,
-  versionKey: false,
-  toJSON: { virtuals: true, transform(_d, r){ r.id=String(r._id); delete r._id; delete r.passwordHash; } },
-  toObject: { virtuals: true }
-});
+}, { timestamps: true });
+
+userSchema.methods.comparePassword = function (plain) {
+  return bcrypt.compare(plain, this.passwordHash);
+};
+
+userSchema.statics.hashPassword = async function (plain) {
+  return bcrypt.hash(plain, env.BCRYPT_SALT_ROUNDS);
+};
+
 export default mongoose.model('User', userSchema);

@@ -1,15 +1,11 @@
-import { ZodError } from 'zod';
+// src/middlewares/errorHandler.js
 import { logger } from '../libs/logger.js';
 
-export function notFound(_req, res){ res.status(404).json({ error: 'Not Found' }); }
+export function notFound(_req, res, _next) {
+  res.status(404).json({ error: 'Not found' });
+}
 
-export function errorHandler(err, req, res, _next){
-  if (err instanceof ZodError) return res.status(400).json({ error: err.issues });
-  if (err && (err.code === 11000 || err.codeName === 'DuplicateKey')) {
-    return res.status(409).json({ error: 'Duplicate key', details: err.keyValue || {} });
-  }
-  const status = err.status || 500;
-  const msg = err.publicMessage || 'Internal Server Error';
-  if (status >= 500) logger.error({ err, path: req.url }, 'Unhandled error');
-  res.status(status).json({ error: msg });
+export function errorHandler(err, _req, res, _next) {
+  logger.error({ err }, 'Unhandled error');
+  res.status(err.status || 500).json({ error: err.publicMessage || 'Server error' });
 }

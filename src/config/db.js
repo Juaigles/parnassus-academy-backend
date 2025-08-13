@@ -1,9 +1,10 @@
+// src/config/db.js
 import mongoose from 'mongoose';
-import { logger } from '../libs/logger.js';
 import { env } from './env.js';
+import { logger } from '../libs/logger.js';
 
 export async function connectDB() {
   mongoose.set('strictQuery', true);
-  await mongoose.connect(env.MONGO_URI, { autoIndex: true, maxPoolSize: 10 });
+  await mongoose.connect(env.MONGO_URI);
   logger.info('Mongo connected');
 }

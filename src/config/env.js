@@ -1,25 +1,25 @@
+// src/config/env.js
 import 'dotenv/config';
 import { z } from 'zod';
 
 const schema = z.object({
+  NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   PORT: z.coerce.number().default(3000),
-  NODE_ENV: z.enum(['development','test','production']).default('development'),
+  MONGO_URI: z.string().url().or(z.string().regex(/^mongodb/)),
   CORS_ORIGIN: z.string().optional(),
-  MONGO_URI: z.string().min(10),
-  JWT_ACCESS_SECRET: z.string().min(10),
-  JWT_REFRESH_SECRET: z.string().min(10),
-  JWT_ACCESS_EXPIRES: z.string().default('15m'),
-  JWT_REFRESH_EXPIRES: z.string().default('7d'),
-  LOG_LEVEL: z.string().default('info'),
-  PINO_PRETTY: z.string().optional(),
-  PROGRESS_VIDEO_THRESHOLD: z.string().optional(),
-  CERT_HASH_SECRET: z.string().min(5),
-  SIGNED_URL_TTL_SEC: z.coerce.number().default(3600)
+  LOG_LEVEL: z.enum(['fatal','error','warn','info','debug','trace','silent']).default('info'),
+
+  JWT_ACCESS_SECRET: z.string().min(16),
+  JWT_REFRESH_SECRET: z.string().min(16),
+  JWT_ACCESS_TTL: z.string().default('15m'),
+  JWT_REFRESH_TTL: z.string().default('7d'),
+
+  BCRYPT_SALT_ROUNDS: z.coerce.number().default(10),
 });
 
 const parsed = schema.safeParse(process.env);
 if (!parsed.success) {
-  console.error('Invalid environment configuration:', parsed.error.flatten());
+  console.error('Invalid .env:', parsed.error.flatten().fieldErrors);
   process.exit(1);
 }
 export const env = parsed.data;
