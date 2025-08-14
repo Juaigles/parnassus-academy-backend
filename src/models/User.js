@@ -8,6 +8,18 @@ const userSchema = new mongoose.Schema({
   passwordHash: { type: String, required: true },
   roles: { type: [String], default: ['student'] },
   emailVerified: { type: Boolean, default: false },
+  
+  // === 2FA FIELDS ===
+  twoFactorEnabled: { type: Boolean, default: false },
+  twoFactorSecret: { type: String },
+  twoFactorBackupCodes: [{ type: String }],
+  
+  // === ANALYTICS FIELDS ===
+  lastLogin: { type: Date },
+  loginCount: { type: Number, default: 0 },
+  preferredLanguage: { type: String, default: 'es' },
+  timezone: { type: String, default: 'America/Mexico_City' },
+  
 }, { timestamps: true });
 
 userSchema.methods.comparePassword = function (plain) {

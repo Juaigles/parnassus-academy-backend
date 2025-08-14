@@ -66,6 +66,16 @@ const statsSchema = new mongoose.Schema({
   totalDurationSec: { type: Number, default: 0 },
   hasCertificate: { type: Boolean, default: true },
   hasQuizzes: { type: Boolean, default: false },
+  totalStudents: { type: Number, default: 0 },
+  totalReviews: { type: Number, default: 0 },
+  averageRating: { type: Number, default: 0, min: 0, max: 5 },
+  ratingBreakdown: {
+    1: { type: Number, default: 0 },
+    2: { type: Number, default: 0 },
+    3: { type: Number, default: 0 },
+    4: { type: Number, default: 0 },
+    5: { type: Number, default: 0 }
+  }
 }, { _id: false });
 
 const courseSchema = new mongoose.Schema({

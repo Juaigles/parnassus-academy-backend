@@ -29,6 +29,39 @@ const schema = z.object({
   SMTP_PORT: z.coerce.number().optional(),
   SMTP_USER: z.string().optional(),
   SMTP_PASS: z.string().optional(),
+  
+  // === NUEVAS CONFIGURACIONES DE MEJORAS ===
+  
+  // Cache
+  CACHE_TTL: z.coerce.number().default(300000), // 5 minutos
+  CACHE_MAX_SIZE: z.coerce.number().default(1000),
+  
+  // Seguridad
+  XSS_PROTECTION: z.coerce.boolean().default(true),
+  MALICIOUS_REQUEST_DETECTION: z.coerce.boolean().default(true),
+  TIMING_ATTACK_PROTECTION: z.coerce.boolean().default(true),
+  
+  // Rate Limiting
+  RATE_LIMIT_AUTH_MAX: z.coerce.number().default(5),
+  RATE_LIMIT_API_MAX: z.coerce.number().default(100),
+  RATE_LIMIT_PAYMENT_MAX: z.coerce.number().default(10),
+  RATE_LIMIT_WINDOW: z.coerce.number().default(900000), // 15 minutos
+  
+  // Monitoring
+  HEALTH_CHECK_ALERTS: z.coerce.boolean().default(true),
+  SLOW_QUERY_THRESHOLD: z.coerce.number().default(100),
+  METRICS_RETENTION_HOURS: z.coerce.number().default(24),
+  
+  // Database Optimization
+  DB_ENABLE_QUERY_MONITORING: z.coerce.boolean().default(true),
+  DB_AUTO_CREATE_INDEXES: z.coerce.boolean().default(true),
+  DB_CONNECTION_POOL_SIZE: z.coerce.number().default(10),
+  
+  // Logging
+  STRUCTURED_LOGGING: z.coerce.boolean().default(true),
+  AUDIT_LOGGING: z.coerce.boolean().default(true),
+  BUSINESS_EVENT_LOGGING: z.coerce.boolean().default(true),
+  LOG_SANITIZATION: z.coerce.boolean().default(true),
 });
 
 const parsed = schema.safeParse(process.env);
